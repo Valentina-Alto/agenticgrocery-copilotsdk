@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermarket AI Shopping Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 1000px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* LOGIN SCREEN */
+        .login-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            flex: 1;
+        }
+
+        .login-screen.hidden {
+            display: none;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .customer-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        .customer-card {
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            background: white;
+        }
+
+        .customer-card:hover {
+            border-color: #10b981;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.2);
+        }
+
+        .customer-card.selected {
+            background: #d1fae5;
+            border-color: #10b981;
+            font-weight: 600;
+        }
+
+        .customer-card-name {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .customer-card-prefs {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+        }
+
+        .login-btn {
+            padding: 14px 32px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .login-btn:hover {
+            background: #059669;
+        }
+
+        .login-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* MAIN CHAT INTERFACE */
+        .chat-interface {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-interface.hidden {
+            display: none;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .header-left h1 {
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .customer-info {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .logout-btn {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            gap: 0;
+        }
+
+        .chat-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #e0e0e0;
+        }
+
+        .chat-box {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background: #fafafa;
+        }
+
+        .message {
+            display: flex;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            word-wrap: break-word;
+            line-height: 1.4;
+            font-size: 14px;
+        }
+
+        .message.user .message-content {
+            background: #10b981;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .message.user .avatar {
+            background: #10b981;
+            color: white;
+        }
+
+        .message.assistant .avatar {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .input-section {
+            padding: 15px 20px;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            background: white;
+        }
+
+        .input-section form {
+            display: flex;
+            width: 100%;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #10b981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        button {
+            padding: 12px 24px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #059669;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: flex;
+            gap: 6px;
+            padding: 12px 16px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            animation: bounce 1.4s infinite;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes bounce {
+            0%, 80%, 100% {
+                opacity: 0.5;
+            }
+            40% {
+                opacity: 1;
+            }
+        }
+
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #999;
+            text-align: center;
+        }
+
+        .empty-state h2 {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .suggestions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .suggestion {
+            padding: 10px;
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .suggestion:hover {
+            background: #f5f5f5;
+            border-color: #10b981;
+        }
+
+        /* CART SIDEBAR */
+        .cart-section {
+            width: 280px;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #e0e0e0;
+        }
+
+        .cart-header {
+            padding: 15px;
+            background: #f3f4f6;
+            border-bottom: 1px solid #e0e0e0;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1f2937;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .cart-empty {
+            text-align: center;
+            color: #999;
+            padding: 20px 10px;
+            font-size: 13px;
+        }
+
+        .cart-item {
+            padding: 10px;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 12px;
+            border-left: 3px solid #10b981;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 4px;
+        }
+
+        .cart-item-price {
+            color: #059669;
+            font-weight: 600;
+        }
+
+        .cart-item-qty {
+            color: #666;
+            font-size: 11px;
+        }
+
+        .cart-item-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .delete-btn {
+            padding: 4px 8px;
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #fdd;
+            color: #a00;
+        }
+
+        .cart-footer {
+            padding: 15px;
+            border-top: 1px solid #e0e0e0;
+            background: #f9fafb;
+        }
+
+        .cart-total {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .cart-total-value {
+            color: #10b981;
+        }
+
+        .cart-item-count {
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .checkout-btn {
+            width: 100%;
+            padding: 10px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .checkout-btn:hover {
+            background: #059669;
+        }
+
+        .checkout-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .error {
+            background: #fee;
+            border: 1px solid #fcc;
+            color: #c33;
+        }
+
+        .success {
+            background: #efe;
+            border: 1px solid #cfc;
+            color: #3c3;
+        }
+
+        /* CHECKOUT MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.show {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 12px;
+        }
+
+        .modal-message {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+
+        .modal-order-info {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .modal-order-info .label {
+            color: #999;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .modal-order-info .value {
+            font-weight: 600;
+            color: #10b981;
+            font-size: 18px;
+        }
+
+        .modal-close-btn {
+            padding: 12px 32px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+
+        .modal-close-btn:hover {
+            background: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- LOGIN SCREEN -->
+        <div class="login-screen" id="loginScreen">
+            <div class="login-header">
+                <h1>🛒 SmartShop</h1>
+                <p>Your AI-Powered Shopping Assistant</p>
+            </div>
+            <p style="margin-bottom: 20px; color: #666;">Select a customer to start shopping:</p>
+            <div class="customer-select" id="customerSelect"></div>
+            <button class="login-btn" id="loginBtn" onclick="handleLogin()" disabled>
+                Start Shopping
+            </button>
+        </div>
+
+        <!-- CHAT INTERFACE -->
+        <div class="chat-interface hidden" id="chatInterface">
+            <div class="header">
+                <div class="header-left">
+                    <h1>🛒 SmartShop</h1>
+                </div>
+                <div class="header-right">
+                    <div class="customer-info" id="customerInfo"></div>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <!-- CHAT SECTION -->
+                <div class="chat-section">
+                    <div class="chat-box" id="chatBox">
+                        <div class="empty-state">
+                            <h2>🛍️</h2>
+                            <p>Welcome to SmartShop!<br>Let's find the perfect items for you.</p>
+                            <div class="suggestions">
+                                <div class="suggestion" onclick="sendSuggestion('What products do you recommend for me?')">Get recommendations</div>
+                                <div class="suggestion" onclick="sendSuggestion('What special offers do you have today?')">Special offers</div>
+                                <div class="suggestion" onclick="sendSuggestion('Help me find organic vegetables')">Find products</div>
+                                <div class="suggestion" onclick="sendSuggestion('Show me my cart')">View cart</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-section">
+                        <form onsubmit="handleSubmit(event)">
+                            <input 
+                                type="text" 
+                                id="messageInput" 
+                                placeholder="Tell me what you're looking for or ask for recommendations..." 
+                                autocomplete="off"
+                            >
+                            <button type="submit" id="sendBtn">Send</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- CART SECTION -->
+                <div class="cart-section">
+                    <div class="cart-header">🛒 Shopping Cart</div>
+                    <div class="cart-items" id="cartItems">
+                        <div class="cart-empty">Your cart is empty</div>
+                    </div>
+                    <div class="cart-footer">
+                        <div class="cart-item-count" id="cartCount">0 items</div>
+                        <div class="cart-total">
+                            <span>Total:</span>
+                            <span class="cart-total-value" id="cartTotal">$0.00</span>
+                        </div>
+                        <button class="checkout-btn" id="checkoutBtn" onclick="handleCheckout()" disabled>Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CHECKOUT CONFIRMATION MODAL -->
+        <div class="modal" id="checkoutModal">
+            <div class="modal-content">
+                <div class="modal-icon">✅</div>
+                <div class="modal-title">Thank You!</div>
+                <div class="modal-message">Your order is in preparation</div>
+                <div class="modal-order-info">
+                    <div class="label">Estimated Delivery</div>
+                    <div class="value">30-45 minutes</div>
+                </div>
+                <button class="modal-close-btn" onclick="closeCheckoutModal()">Continue Shopping</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedCustomer = null;
+
+        // INITIALIZATION
+        async function loadCustomers() {
+            try {
+                const response = await fetch('/api/customers');
+                const data = await response.json();
+                const customerSelect = document.getElementById('customerSelect');
+                
+                data.customers.forEach(customer => {
+                    const card = document.createElement('div');
+                    card.className = 'customer-card';
+                    card.innerHTML = `
+                        <div class="customer-card-name">${customer.name}</div>
+                        <div class="customer-card-prefs">Click to select</div>
+                    `;
+                    card.onclick = () => selectCustomer(customer.id, card);
+                    customerSelect.appendChild(card);
+                });
+            } catch (error) {
+                console.error('Error loading customers:', error);
+            }
+        }
+
+        function selectCustomer(customerId, element) {
+            document.querySelectorAll('.customer-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedCustomer = customerId;
+            document.getElementById('loginBtn').disabled = false;
+        }
+
+        async function handleLogin() {
+            if (!selectedCustomer) return;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customer_id: selectedCustomer })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('customerInfo').textContent = data.customer_name;
+                    document.getElementById('loginScreen').classList.add('hidden');
+                    document.getElementById('chatInterface').classList.remove('hidden');
+                    document.getElementById('messageInput').focus();
+                    loadCart();
+                } else {
+                    alert('Login failed');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+            }
+        }
+
+        async function handleLogout() {
+            if (confirm('Are you sure you want to logout?')) {
+                try {
+                    await fetch('/api/logout', { method: 'POST' });
+                    location.reload();
+                } catch (error) {
+                    console.error('Logout error:', error);
+                }
+            }
+        }
+
+        // CHAT FUNCTIONS
+        const chatBox = document.getElementById('chatBox');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function addMessage(content, isUser = false, isError = false) {
+            const emptyState = chatBox.querySelector('.empty-state');
+            if (emptyState) {
+                emptyState.remove();
+            }
+
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'assistant'}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = isUser ? '👤' : '🤖';
+            
+            const content_div = document.createElement('div');
+            content_div.className = 'message-content';
+            content_div.textContent = content;
+            
+            if (isError) {
+                content_div.classList.add('error');
+            }
+            
+            messageDiv.appendChild(isUser ? content_div : avatar);
+            messageDiv.appendChild(isUser ? avatar : content_div);
+            
+            chatBox.appendChild(messageDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function showLoading() {
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message assistant';
+            loadingDiv.id = 'loading';
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'avatar';
+            avatar.textContent = '🤖';
+            
+            const loading = document.createElement('div');
+            loading.className = 'loading';
+            loading.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+            
+            loadingDiv.appendChild(avatar);
+            loadingDiv.appendChild(loading);
+            chatBox.appendChild(loadingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function removeLoading() {
+            const loading = document.getElementById('loading');
+            if (loading) {
+                loading.remove();
+            }
+        }
+
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const message = messageInput.value.trim();
+            if (!message) return;
+            
+            addMessage(message, true);
+            messageInput.value = '';
+            sendBtn.disabled = true;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+                
+                removeLoading();
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addMessage(data.response, false);
+                    await loadCart();
+                } else {
+                    addMessage('Sorry, there was an error. Please try again.', false, true);
+                }
+            } catch (error) {
+                removeLoading();
+                addMessage('Error connecting to the server.', false, true);
+                console.error('Error:', error);
+            } finally {
+                sendBtn.disabled = false;
+                messageInput.focus();
+            }
+        }
+
+        function sendSuggestion(suggestion) {
+            messageInput.value = suggestion;
+            handleSubmit({ preventDefault: () => {} });
+        }
+
+        // CART FUNCTIONS
+        async function loadCart() {
+            try {
+                const response = await fetch('/api/cart');
+                if (response.ok) {
+                    const data = await response.json();
+                    const cartItems = document.getElementById('cartItems');
+                    const cartCount = document.getElementById('cartCount');
+                    const cartTotal = document.getElementById('cartTotal');
+                    const checkoutBtn = document.getElementById('checkoutBtn');
+
+                    if (data.items.length === 0) {
+                        cartItems.innerHTML = '<div class="cart-empty">Your cart is empty</div>';
+                        cartCount.textContent = '0 items';
+                        cartTotal.textContent = '$0.00';
+                        checkoutBtn.disabled = true;
+                    } else {
+                        cartItems.innerHTML = data.items.map(item => `
+                            <div class="cart-item">
+                                <div class="cart-item-name">${item.name}</div>
+                                <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                                <div class="cart-item-qty">Qty: ${item.quantity} = $${item.subtotal.toFixed(2)}</div>
+                                <div class="cart-item-controls">
+                                    <button class="delete-btn" onclick="deleteFromCart('${item.product_id}')">Delete</button>
+                                </div>
+                            </div>
+                        `).join('');
+                        cartCount.textContent = `${data.item_count} item${data.item_count !== 1 ? 's' : ''}`;
+                        cartTotal.textContent = `$${data.total.toFixed(2)}`;
+                        checkoutBtn.disabled = false;
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading cart:', error);
+            }
+        }
+
+        async function deleteFromCart(productId) {
+            try {
+                const response = await fetch('/api/cart/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ product_id: productId })
+                });
+
+                if (response.ok) {
+                    await loadCart();
+                } else {
+                    alert('Failed to remove item from cart');
+                }
+            } catch (error) {
+                console.error('Error removing item:', error);
+                alert('Error removing item from cart');
+            }
+        }
+
+        function handleCheckout() {
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.add('show');
+        }
+
+        function closeCheckoutModal() {
+            const modal = document.getElementById('checkoutModal');
+            modal.classList.remove('show');
+            // Optional: clear the cart after successful checkout
+            // location.reload();
+        }
+
+        // Close modal when clicking outside of it
+        window.addEventListener('click', function(event) {
+            const modal = document.getElementById('checkoutModal');
+            if (event.target === modal) {
+                closeCheckoutModal();
+            }
+        });
+
+        // STARTUP
+        loadCustomers();
+    </script>
+</body>
+</html>
